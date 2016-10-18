@@ -1,7 +1,7 @@
 {
-    "version": "3.0.0",
-    "summary": "PostgREST Query Builder",
-    "repository": "https://github.com/john-kelly/elm-postgrest.git",
+    "version": "1.0.0",
+    "summary": "PostgREST Query Builder (temporary fork of john-kelly/elm-postgrest",
+    "repository": "https://github.com/danstn/elm-postgrest.git",
     "license": "BSD3",
     "source-directories": [
         "src"
