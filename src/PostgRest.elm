@@ -141,14 +141,16 @@ type Filter
     = Filter Bool Condition String
 
 
+type alias Modifier a
+    = (a -> String)
+
 {-| thanks lukewestby
 https://github.com/elm-lang/core/issues/657
 -}
-coerceToString : a -> String
-coerceToString value =
+coerceToString : Modifier a -> a -> String
+coerceToString showFn value =
     let
-        stringValue =
-            toString value
+        stringValue = showFn value
     in
         stringValue
             |> Decode.decodeString Decode.string
@@ -229,7 +231,7 @@ singleValueFilterFn : (String -> Condition) -> a -> (schema -> Field b) -> schem
 singleValueFilterFn condCtor condArg attrAccessor schema =
     case attrAccessor schema of
         Field name _ ->
-            Filter False (condCtor (coerceToString condArg)) name
+            Filter False (condCtor (coerceToString toString condArg)) name
 
 
 {-|
@@ -284,11 +286,11 @@ lt =
 
 {-| In List
 -}
-in' : List a -> (schema -> Field a) -> schema -> Filter
-in' condArgs attrAccessor schema =
+in' : List a -> Modifier a -> (schema -> Field a) -> schema -> Filter
+in' condArgs mod attrAccessor schema =
     case attrAccessor schema of
         Field name _ ->
-            Filter False (In (List.map coerceToString condArgs)) name
+            Filter False (In (List.map (coerceToString mod) condArgs)) name
 
 
 {-| Is comparison
