@@ -114,7 +114,7 @@ type Select
 
 {-| -}
 type Field a
-    = Field String (Decode.Decoder a)
+    = Field String (Decode.Decoder a) (Modifier a)
 
 
 {-| -}
@@ -164,7 +164,7 @@ resource =
 
 
 {-| -}
-field : String -> Decode.Decoder a -> Field a
+field : String -> Decode.Decoder a -> (a -> String) -> Field a
 field =
     Field
 
@@ -200,7 +200,7 @@ includeMany limit (Query subName subShape subParams subDecoder) (Query queryName
 select : (schema -> Field a) -> Query schema (a -> b) -> Query schema b
 select fieldAccessor (Query name schema params decoder) =
     case fieldAccessor schema of
-        Field fieldName fieldDecoder ->
+        Field fieldName fieldDecoder _ ->
             Query name
                 schema
                 { params | select = Simple fieldName :: params.select }
@@ -227,11 +227,11 @@ filter filters (Query name schema params decoder) =
 
 
 {-| -}
-singleValueFilterFn : (String -> Condition) -> a -> (schema -> Field b) -> schema -> Filter
+singleValueFilterFn : (String -> Condition) -> a -> (schema -> Field a) -> schema -> Filter
 singleValueFilterFn condCtor condArg attrAccessor schema =
     case attrAccessor schema of
-        Field name _ ->
-            Filter False (condCtor (coerceToString toString condArg)) name
+        Field name _ f ->
+            Filter False (condCtor (coerceToString f condArg)) name
 
 
 {-|
@@ -286,11 +286,11 @@ lt =
 
 {-| In List
 -}
-in' : List a -> Modifier a -> (schema -> Field a) -> schema -> Filter
-in' condArgs mod attrAccessor schema =
+in' : List a -> (schema -> Field a) -> schema -> Filter
+in' condArgs attrAccessor schema =
     case attrAccessor schema of
-        Field name _ ->
-            Filter False (In (List.map (coerceToString mod) condArgs)) name
+        Field name _ f ->
+            Filter False (In (List.map (coerceToString f) condArgs)) name
 
 
 {-| Is comparison
@@ -314,7 +314,7 @@ not' filterAccessorCtor val fieldAccessor schema =
 asc : (schema -> Field a) -> schema -> OrderBy
 asc fieldAccessor schema =
     case fieldAccessor schema of
-        Field name _ ->
+        Field name _ _ ->
             Asc name
 
 
@@ -323,7 +323,7 @@ asc fieldAccessor schema =
 desc : (schema -> Field a) -> schema -> OrderBy
 desc fieldAccessor schema =
     case fieldAccessor schema of
-        Field name _ ->
+        Field name _ _ ->
             Desc name
 
 
